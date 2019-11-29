@@ -19,20 +19,24 @@ import json
 import requests
 import time
 
-# Configure this section ^_^
-api_token = "Should be secret~"
+from openblu import api_token, check_server
 
-def check_server(code, url="https://api.intellivoid.info/openblu"):
-	id = code
+# Config me!
+country = "JP"
+max = "10"
+
+def batch_server(url="https://api.intellivoid.info/openblu"):
 	request_api = {
-		"server_id": id,
 		"api_key": api_token
 	}
 
-	api_response = requests.post(url + "/v1/getServer", request_api)
+
+	api_response = requests.post(url + "/v1/getServers", request_api)
 	json_req = json.loads(api_response.text)
 	status = api_response.status_code
+	print(status)
 	try:
+		status = api_response.status_code
 		if int(status) == int(401):
 			if json_req['message'] == "Authentication is required":
 				print("[Error] Authentication is required!\nMake sure you have proper API token!")
@@ -66,62 +70,22 @@ def check_server(code, url="https://api.intellivoid.info/openblu"):
 					print("Ref Code: " + json_req['ref_code'])
 				except:
 					pass
+
 				return "undefined"
 
 	except:
 		pass
 
-	#TODO
-	#if not json_req['status'] == "true":
-	#	return "dunno"
+	msg = json_req['payload']
+	count = int(0)
+	for js in msg:
+		if js['country_short'] == country:
+			if count == int(max):
+				return
+			else:
+				count = int(count) + int(1)
 
-	payload = json_req['payload']
-	id = payload['id']
-	host = payload['host_name']
-	ip = payload['ip_address']
-	score = payload['score']
-	ping = payload['ping']
-	country = payload['country']
-	iso_country = payload['country_short']
-	sessions = payload['sessions']
-	total_sessions = payload['total_sessions']
-	last_updated = payload['last_updated']
-	created = payload['created']
-	last_updated_formatted = time.strftime("%Y %B %d %H:%M", time.localtime(int(last_updated)))
-	created_formatted = time.strftime("%Y %B %d %H:%M", time.localtime(int(created)))
+			server_id = js['public_id']
+			check_server(server_id)
 
-	# Tricky Part
-	print("\n\nStarting to export OpenVPN Configuration!\n")
-	ref = json_req['ref_code']
-	ovpn = payload['openvpn']
-	ovpn_output = ovpn['ovpn_configuration']
-	file_name = f"openblu_{ref}"
-	file = open(f"{file_name}.ovpn", 'w')
-	file.write(ovpn_output)
-	file.close()
-	print("Done!\n\n")
-
-	full = f"""
-VPN Information:
-VPN ID: {id}
-VPM Host Name: {host}
-VPN IP: {ip}
-VPN Score: {score}
-VPN Country: {country} ({iso_country})
-VPN Current Active Sessions: {sessions} sessions
-VPN Total Sessions: {total_sessions} sessions
-VPN Last Updated (UnFormatted): {last_updated}
-VPN Created At (UnFormatted): {created}
-VPN Last Updated: {last_updated_formatted}
-VPN Created At: {created_formatted}
-"""
-	print(full)
-	return "success"
-
-
-
-# check_server("SERVER_ID")
-
-# Example
-
-# check_server("33651b4d1c3443a5")
+batch_server()
