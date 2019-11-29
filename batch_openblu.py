@@ -23,7 +23,8 @@ from openblu import api_token, check_server
 
 # Config me!
 country = "JP"
-max = "10"
+max = "5"
+month = "2629743"
 
 def batch_server(url="https://api.intellivoid.info/openblu"):
 	request_api = {
@@ -80,12 +81,16 @@ def batch_server(url="https://api.intellivoid.info/openblu"):
 	count = int(0)
 	for js in msg:
 		if js['country_short'] == country:
-			if count == int(max):
-				return
-			else:
-				count = int(count) + int(1)
+			created = js['created']
+			timee = int(time.time())
+			total = int(timee) - int(month)
+			if  int(total) <= int(created):
+				if count == int(max):
+					return
+				else:
+					count = int(count) + int(1)
 
-			server_id = js['public_id']
-			check_server(server_id)
+				server_id = js['public_id']
+				check_server(server_id)
 
 batch_server()
